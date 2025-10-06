@@ -1,4 +1,4 @@
-# Private Blog (Telegraph Clone) — Panduan Lengkap
+# Private Blog
 
 Repositori ini adalah contoh aplikasi web sederhana (mirip Telegraph) yang sudah direfaktor menjadi struktur project Go yang lebih rapi dan mengikuti pola Repository.
 
