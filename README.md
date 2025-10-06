@@ -1,101 +1,90 @@
-# Telegraph Clone (refactored)
+# Private Blog
 
-This repository is a small example web application (Telegraph-like) that was refactored into an idiomatic Go project layout and updated to use the Repository pattern.
+Repositori ini adalah contoh aplikasi web kecil (mirip Telegraph) yang telah direfaktor menjadi struktur project Go yang lebih idiomatik dan menggunakan pola Repository.
 
-The refactor separates concerns into packages and makes it easier to swap data storage implementations, add tests, and extend the app.
+Refaktor ini memisahkan tanggung jawab ke dalam paket-paket sehingga lebih mudah mengganti implementasi penyimpanan data, menambahkan pengujian, dan memperluas aplikasi.
 
 ---
 
-## Project layout
+## Struktur proyek
 
 ```
 cmd/
-  web/                # application entrypoint (main)
+  web/                # entrypoint aplikasi (main)
 internal/
-  handler/            # HTTP handlers + templates
+  handler/            # HTTP handlers + template
     handler.go
-  models/             # domain models
+  models/             # model domain
     article.go
-  repository/         # repository interface + implementations
+  repository/         # interface repository + implementasi
     repository.go
-    memory.go          # in-memory implementation
-  service/            # business logic
+    memory.go          # implementasi in-memory
+  service/            # logika bisnis
     article_service.go
 go.mod
 README.md
 ```
 
-Why this layout?
-- `cmd/web` contains the program entrypoint. Additional commands can be added later.
-- `internal/*` packages are private to this module and keep implementation details inside the repository.
-- `repository` implements the Repository pattern: code depends on an interface, and concrete storage implementations (in-memory, DB-backed) implement it.
+Kenapa susunan ini?
+- `cmd/web` berisi entrypoint program. Perintah lain bisa ditambahkan nanti.
+- Paket di `internal/*` bersifat privat untuk modul ini sehingga detail implementasi tidak diekspor ke pengguna paket lain.
+- `repository` menerapkan pola Repository: kode bergantung pada interface, dan implementasi penyimpanan (in-memory, DB) mengimplementasikannya.
 
 ---
 
-## What changed during refactor
+## Perubahan setelah refaktor
 
-- The original single-file `main.go` app has been split into packages: models, repository (interface + memory), service and handler.
-- `service.ArticleService` contains business logic (ID generation, sanitization, create/get/update/delete operations).
-- `repository.Repository` is an interface; `repository.MemoryRepo` is a simple thread-safe in-memory implementation.
-- `handler` is responsible for HTTP endpoints and templates.
-- Entrypoint `cmd/web/main.go` wires repository -> service -> handler and starts the HTTP server on :8080.
+- Aplikasi single-file `main.go` dipecah menjadi beberapa paket: `models`, `repository` (interface + memory), `service`, dan `handler`.
+- `service.ArticleService` menampung logika bisnis (pembuatan ID, sanitasi, operasi create/get/update/delete).
+- `repository.Repository` adalah interface; `repository.MemoryRepo` adalah implementasi in-memory yang thread-safe.
+- `handler` bertanggung jawab pada endpoint HTTP dan template.
+- Entrypoint `cmd/web/main.go` menghubungkan repository -> service -> handler dan menjalankan server HTTP pada :8080.
 
 ---
 
-## How to run
+## Cara menjalankan
 
-Make sure you have Go installed (Go 1.20+ recommended). From the project root run:
+Pastikan Go terinstal (disarankan Go 1.20+). Dari root proyek jalankan:
 
-Windows (cmd.exe) - run directly:
+Windows (cmd.exe) - jalankan langsung:
 
 ```cmd
 go run ./cmd/web
 ```
 
-or build and run executable:
+atau build dan jalankan executable:
 
 ```cmd
 go build -o web ./cmd/web
 .\web
 ```
 
-The server will run at `http://localhost:8080`.
+Server akan berjalan di `http://localhost:8080`.
 
 ---
 
-## Endpoints
+## Endpoint
 
-- GET `/` — home editor page
-- POST `/create` — create article
-- GET `/view/{id}` — view article
-- GET `/edit/{id}` — edit page (ownership required)
-- POST `/update/{id}` — update article (ownership required)
-- POST `/delete/{id}` — delete article (ownership required)
+- GET `/` — halaman editor (home)
+- POST `/create` — membuat artikel
+- GET `/view/{id}` — melihat artikel
+- GET `/edit/{id}` — halaman edit (memerlukan kepemilikan)
+- POST `/update/{id}` — memperbarui artikel (memerlukan kepemilikan)
+- POST `/delete/{id}` — menghapus artikel (memerlukan kepemilikan)
 
-Ownership is tracked by a cookie `user_id` created on first visit.
-
----
-
-## Notes, limitations and recommendations
-
-- The repository currently uses an in-memory store. All data is lost on process exit.
-- Sanitization is simplistic (`\n` -> `<br>`). For a production app use a proper HTML sanitizer and ensure templates are escaped when rendering untrusted HTML.
-- Templates are embedded as constants in `internal/handler/handler.go` for simplicity. For maintainability, consider moving them to `templates/` files and loading via `template.ParseGlob`.
-- Add structured logging and graceful shutdown for production readiness.
-
-Recommended next steps you can ask me to implement:
-- Add `templates/` directory and load templates from files.
-- Add unit tests for `service` and `repository` (memory implementation).
-- Add a SQL-backed repository (SQLite/Postgres) and migrations.
-- Improve sanitization using a library (e.g., bluemonday) or proper escaping.
+Kepemilikan dilacak lewat cookie `user_id` yang dibuat pada kunjungan pertama.
 
 ---
 
-If you want, I can now:
-- Move the templates to disk and update the handler to parse them from `templates/`.
-- Add a basic `README` (done) and a couple of unit tests.
-- Implement a persistent repository (SQLite) and demonstrate migrations.
+## Catatan, keterbatasan, dan rekomendasi
 
-Tell me which follow-up you prefer and I'll implement it next.
-# weather-api-test-web-based
-Nyoba Web Cek Cuaca berdasarkan Kota
+- Repo saat ini menggunakan penyimpanan in-memory. Semua data akan hilang ketika proses berhenti.
+- Sanitasi konten masih sederhana (`\n` -> `<br>`). Untuk produksi, gunakan sanitizer HTML yang matang dan pastikan template men-escape konten yang tidak dipercaya.
+- Template dimasukkan sebagai konstanta di `internal/handler/handler.go` agar sederhana. Untuk maintainability, pertimbangkan memindahkan template ke folder `templates/` dan memuatnya dengan `template.ParseGlob`.
+- Tambahkan logging terstruktur dan mekanisme graceful shutdown untuk kesiapan produksi.
+
+Langkah selanjutnya yang direkomendasikan (bisa saya implementasikan atas permintaan):
+- Pindahkan template ke folder `templates/` dan muat dari file.
+- Tambahkan unit test untuk `service` dan `repository` (implementasi memory).
+- Tambahkan implementasi repository persistent (SQLite/Postgres) beserta migration.
+- Perbaiki sanitasi menggunakan library (misalnya bluemonday) atau teknik escaping yang benar.
