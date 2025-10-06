@@ -1,5 +1,4 @@
 # Private Blog
-# Private Blog
 
 Repositori ini adalah contoh aplikasi web kecil (mirip Telegraph) yang telah direfaktor menjadi struktur project Go yang lebih idiomatik dan menggunakan pola Repository.
 
