@@ -1,4 +1,5 @@
 # Private Blog
+# Private Blog
 
 Repositori ini adalah contoh aplikasi web kecil (mirip Telegraph) yang telah direfaktor menjadi struktur project Go yang lebih idiomatik dan menggunakan pola Repository.
 
@@ -77,14 +78,3 @@ Kepemilikan dilacak lewat cookie `user_id` yang dibuat pada kunjungan pertama.
 ---
 
 ## Catatan, keterbatasan, dan rekomendasi
-
-- Repo saat ini menggunakan penyimpanan in-memory. Semua data akan hilang ketika proses berhenti.
-- Sanitasi konten masih sederhana (`\n` -> `<br>`). Untuk produksi, gunakan sanitizer HTML yang matang dan pastikan template men-escape konten yang tidak dipercaya.
-- Template dimasukkan sebagai konstanta di `internal/handler/handler.go` agar sederhana. Untuk maintainability, pertimbangkan memindahkan template ke folder `templates/` dan memuatnya dengan `template.ParseGlob`.
-- Tambahkan logging terstruktur dan mekanisme graceful shutdown untuk kesiapan produksi.
-
-Langkah selanjutnya yang direkomendasikan (bisa saya implementasikan atas permintaan):
-- Pindahkan template ke folder `templates/` dan muat dari file.
-- Tambahkan unit test untuk `service` dan `repository` (implementasi memory).
-- Tambahkan implementasi repository persistent (SQLite/Postgres) beserta migration.
-- Perbaiki sanitasi menggunakan library (misalnya bluemonday) atau teknik escaping yang benar.
