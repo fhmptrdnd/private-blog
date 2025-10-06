@@ -1,4 +1,4 @@
-# Telegraph Clone (refactored)
+# Private Blog
 
 This repository is a small example web application (Telegraph-like) that was refactored into an idiomatic Go project layout and updated to use the Repository pattern.
 
@@ -90,12 +90,3 @@ Recommended next steps you can ask me to implement:
 - Improve sanitization using a library (e.g., bluemonday) or proper escaping.
 
 ---
-
-If you want, I can now:
-- Move the templates to disk and update the handler to parse them from `templates/`.
-- Add a basic `README` (done) and a couple of unit tests.
-- Implement a persistent repository (SQLite) and demonstrate migrations.
-
-Tell me which follow-up you prefer and I'll implement it next.
-# weather-api-test-web-based
-Nyoba Web Cek Cuaca berdasarkan Kota
