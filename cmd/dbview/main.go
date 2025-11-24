@@ -27,7 +27,7 @@ func main() {
 	}
 	defer rows.Close()
 
-	fmt.Println("=== DATABASE CONTENTS ===\n")
+	fmt.Println("Isi Database:\n")
 	count := 0
 	for rows.Next() {
 		var id, title, author, ownerID string
