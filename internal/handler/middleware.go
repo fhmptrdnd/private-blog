@@ -47,12 +47,17 @@ func WithPanicRecovery(handler http.HandlerFunc) http.HandlerFunc {
 
 // chain, gabungin beberapa middleware jadi satu
 // contoh function composition
+// implementasi rekursif: base case + recursive case
 func Chain(handler http.HandlerFunc, middlewares ...Middleware) http.HandlerFunc {
-	// Apply middlewares dari kanan ke kiri
-	for i := len(middlewares) - 1; i >= 0; i-- {
-		handler = middlewares[i](handler)
+	// base case: kalo ga ada middleware lagi, return handler
+	if len(middlewares) == 0 {
+		return handler
 	}
-	return handler
+	// recursive case: apply middleware terakhir, lalu rekursi ke sisanya
+	// middlewares diterapkan dari kanan ke kiri (reverse order)
+	last := middlewares[len(middlewares)-1]
+	rest := middlewares[:len(middlewares)-1]
+	return Chain(last(handler), rest...)
 }
 
 // withusercontext, bikin closure yang capture user id handling
