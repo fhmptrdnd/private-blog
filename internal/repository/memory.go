@@ -9,52 +9,46 @@ import (
 
 var ErrNotFound = errors.New("not found")
 
-// MemoryRepo is a simple in-memory repository (not for production).
-type MemoryRepo struct {
-    mu       sync.RWMutex
-    articles map[string]models.Article
-}
+// newmemoryrepo, bikin repo baru dengan closure
+// return repository struct yang isinya function-function
+func NewMemoryRepo() Repository {
+    // state disimpan dalam closure (encapsulation via closure)
+    articles := make(map[string]models.Article)
+    var mu sync.RWMutex
 
-// NewMemoryRepo creates a new MemoryRepo.
-func NewMemoryRepo() *MemoryRepo {
-    return &MemoryRepo{
-        articles: make(map[string]models.Article),
+    return Repository{
+        Create: func(a models.Article) error {
+            mu.Lock()
+            defer mu.Unlock()
+            articles[a.ID] = a
+            return nil
+        },
+        Get: func(id string) (models.Article, error) {
+            mu.RLock()
+            defer mu.RUnlock()
+            a, ok := articles[id]
+            if !ok {
+                return models.Article{}, ErrNotFound
+            }
+            return a, nil
+        },
+        Update: func(a models.Article) error {
+            mu.Lock()
+            defer mu.Unlock()
+            if _, ok := articles[a.ID]; !ok {
+                return ErrNotFound
+            }
+            articles[a.ID] = a
+            return nil
+        },
+        Delete: func(id string) error {
+            mu.Lock()
+            defer mu.Unlock()
+            if _, ok := articles[id]; !ok {
+                return ErrNotFound
+            }
+            delete(articles, id)
+            return nil
+        },
     }
-}
-
-func (m *MemoryRepo) Create(a models.Article) error {
-    m.mu.Lock()
-    defer m.mu.Unlock()
-    m.articles[a.ID] = a
-    return nil
-}
-
-func (m *MemoryRepo) Get(id string) (models.Article, error) {
-    m.mu.RLock()
-    defer m.mu.RUnlock()
-    a, ok := m.articles[id]
-    if !ok {
-        return models.Article{}, ErrNotFound
-    }
-    return a, nil
-}
-
-func (m *MemoryRepo) Update(a models.Article) error {
-    m.mu.Lock()
-    defer m.mu.Unlock()
-    if _, ok := m.articles[a.ID]; !ok {
-        return ErrNotFound
-    }
-    m.articles[a.ID] = a
-    return nil
-}
-
-func (m *MemoryRepo) Delete(id string) error {
-    m.mu.Lock()
-    defer m.mu.Unlock()
-    if _, ok := m.articles[id]; !ok {
-        return ErrNotFound
-    }
-    delete(m.articles, id)
-    return nil
 }

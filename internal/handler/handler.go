@@ -3,7 +3,7 @@ package handler
 import (
 	"crypto/rand"
 	"encoding/hex"
-	"fmt"
+
 	"html/template"
 	"net/http"
 	"strings"
@@ -12,48 +12,157 @@ import (
 	"github.com/fhmptrdnd/weather-api-test-web-based/internal/service"
 )
 
+// handler, struct yang isinya function-function handler
+// ini penerapan "functions as first-class citizens" di layer handler
 type Handler struct {
-    svc       *service.ArticleService
-    templates *template.Template
+	Home   http.HandlerFunc
+	Create http.HandlerFunc
+	View   http.HandlerFunc
+	Edit   http.HandlerFunc
+	Update http.HandlerFunc
+	Delete http.HandlerFunc
 }
 
-func NewHandler(svc *service.ArticleService) *Handler {
-    // Parse templates once and give each template a name
-    t := template.New("templates")
-    template.Must(t.New("home").Parse(homeTemplate))
-    template.Must(t.New("view").Parse(viewTemplate))
-    template.Must(t.New("edit").Parse(editTemplate))
+// newhandler, bikin handler baru dengan closure
+// return handler struct yang isinya function-function
+func NewHandler(svc *service.ArticleService) Handler {
+	// parse template sekali aja biar hemat resource
+	t := template.New("templates")
+	template.Must(t.New("home").Parse(homeTemplate))
+	template.Must(t.New("view").Parse(viewTemplate))
+	template.Must(t.New("edit").Parse(editTemplate))
 
-    return &Handler{svc: svc, templates: t}
+	// helper function (closure) buat render template
+	render := func(w http.ResponseWriter, name string, data interface{}) {
+		t.ExecuteTemplate(w, name, data)
+	}
+
+	return Handler{
+		Home: func(w http.ResponseWriter, r *http.Request) {
+			if r.URL.Path != "/" {
+				http.NotFound(w, r)
+				return
+			}
+			render(w, "home", nil)
+		},
+		Create: func(w http.ResponseWriter, r *http.Request) {
+			if r.Method != http.MethodPost {
+				http.Redirect(w, r, "/", http.StatusSeeOther)
+				return
+			}
+			title := r.FormValue("title")
+			author := r.FormValue("author")
+			content := r.FormValue("content")
+			owner := getOrCreateUserID(w, r)
+
+			a, err := svc.Create(title, author, content, owner)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			http.Redirect(w, r, "/view/"+a.ID, http.StatusSeeOther)
+		},
+		View: func(w http.ResponseWriter, r *http.Request) {
+			id := strings.TrimPrefix(r.URL.Path, "/view/")
+			if id == "" {
+				http.Redirect(w, r, "/", http.StatusSeeOther)
+				return
+			}
+			owner := getOrCreateUserID(w, r)
+			
+			// increment views (side effect dipisah dari query)
+			_ = svc.IncrementViews(id)
+
+			a, err := svc.Get(id)
+			if err != nil {
+				http.NotFound(w, r)
+				return
+			}
+			data := viewData{Article: a, IsOwner: a.OwnerID == owner}
+			render(w, "view", data)
+		},
+		Edit: func(w http.ResponseWriter, r *http.Request) {
+			id := strings.TrimPrefix(r.URL.Path, "/edit/")
+			if id == "" {
+				http.Redirect(w, r, "/", http.StatusSeeOther)
+				return
+			}
+			owner := getOrCreateUserID(w, r)
+			// pake get biasa aja, ga perlu nambah view count
+			a, err := svc.Get(id)
+			if err != nil {
+				http.NotFound(w, r)
+				return
+			}
+			if a.OwnerID != owner {
+				http.Error(w, "Forbidden", http.StatusForbidden)
+				return
+			}
+			data := viewData{Article: a, IsOwner: true}
+			render(w, "edit", data)
+		},
+		Update: func(w http.ResponseWriter, r *http.Request) {
+			if r.Method != http.MethodPost {
+				http.Redirect(w, r, "/", http.StatusSeeOther)
+				return
+			}
+			id := strings.TrimPrefix(r.URL.Path, "/update/")
+			title := r.FormValue("title")
+			author := r.FormValue("author")
+			content := r.FormValue("content")
+			owner := getOrCreateUserID(w, r)
+
+			_, err := svc.Update(id, title, author, content, owner)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			http.Redirect(w, r, "/view/"+id, http.StatusSeeOther)
+		},
+		Delete: func(w http.ResponseWriter, r *http.Request) {
+			if r.Method != http.MethodPost {
+				http.Redirect(w, r, "/", http.StatusSeeOther)
+				return
+			}
+			id := strings.TrimPrefix(r.URL.Path, "/delete/")
+			owner := getOrCreateUserID(w, r)
+
+			if err := svc.Delete(id, owner); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			http.Redirect(w, r, "/", http.StatusSeeOther)
+		},
+	}
 }
 
-// getOrCreateUserID copied from original app
+// getorcreateuserid, dapetin id user dari cookie, kalo ga ada bikin baru
 func getOrCreateUserID(w http.ResponseWriter, r *http.Request) string {
-    cookie, err := r.Cookie("user_id")
-    if err == nil && cookie.Value != "" {
-        return cookie.Value
-    }
-    // create new
-    id := generateID()
-    http.SetCookie(w, &http.Cookie{
-        Name:     "user_id",
-        Value:    id,
-        Path:     "/",
-        MaxAge:   31536000 * 10,
-        HttpOnly: true,
-        SameSite: http.SameSiteLaxMode,
-    })
-    return id
+	cookie, err := r.Cookie("user_id")
+	if err == nil && cookie.Value != "" {
+		return cookie.Value
+	}
+	// bikin baru kalo ga nemu
+	id := generateID()
+	http.SetCookie(w, &http.Cookie{
+		Name:     "user_id",
+		Value:    id,
+		Path:     "/",
+		MaxAge:   31536000 * 10,
+		HttpOnly: true,
+		SameSite: http.SameSiteLaxMode,
+	})
+	return id
 }
 
-// generateID same as in service (non-exported duplicate to avoid import cycle)
+// generateid, bikin id random (hex string)
 func generateID() string {
-    b := make([]byte, 8)
-    rand.Read(b)
-    return hex.EncodeToString(b)
+	b := make([]byte, 8)
+	rand.Read(b)
+	return hex.EncodeToString(b)
 }
 
-// Templates (copied from original single-file app)
+// templates html (langsung di sini biar gampang, ga perlu file html terpisah)
 const homeTemplate = `
 <!DOCTYPE html>
 <html lang="id">
@@ -544,135 +653,14 @@ const editTemplate = `
 `
 
 type viewData struct {
-    Article models.Article
-    IsOwner bool
+	Article models.Article
+	IsOwner bool
 }
 
 type editData struct {
-    ID         string
-    Title      string
-    Author     string
-    Content    string
-    ContentRaw string
-}
-
-func (h *Handler) Home(w http.ResponseWriter, r *http.Request) {
-    if r.URL.Path != "/" {
-        http.NotFound(w, r)
-        return
-    }
-    getOrCreateUserID(w, r)
-    h.templates.ExecuteTemplate(w, "home", nil)
-}
-
-func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
-    if r.Method != http.MethodPost {
-        http.Redirect(w, r, "/", http.StatusSeeOther)
-        return
-    }
-    title := r.FormValue("title")
-    author := r.FormValue("author")
-    content := r.FormValue("content")
-    if title == "" || author == "" || content == "" {
-        http.Error(w, "Semua field harus diisi", http.StatusBadRequest)
-        return
-    }
-    owner := getOrCreateUserID(w, r)
-    a, err := h.svc.Create(title, author, content, owner)
-    if err != nil {
-        http.Error(w, fmt.Sprint(err), http.StatusInternalServerError)
-        return
-    }
-    http.Redirect(w, r, "/view/"+a.ID, http.StatusSeeOther)
-}
-
-func (h *Handler) View(w http.ResponseWriter, r *http.Request) {
-    id := strings.TrimPrefix(r.URL.Path, "/view/")
-    if id == "" {
-        http.Redirect(w, r, "/", http.StatusSeeOther)
-        return
-    }
-    owner := getOrCreateUserID(w, r)
-    
-    // Increment views (Side Effect separated from Query)
-    _ = h.svc.IncrementViews(id)
-
-    a, err := h.svc.Get(id)
-    if err != nil {
-        http.NotFound(w, r)
-        return
-    }
-    data := viewData{Article: a, IsOwner: a.OwnerID == owner}
-    h.templates.ExecuteTemplate(w, "view", data)
-}
-
-func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
-    id := strings.TrimPrefix(r.URL.Path, "/edit/")
-    if id == "" {
-        http.Redirect(w, r, "/", http.StatusSeeOther)
-        return
-    }
-    owner := getOrCreateUserID(w, r)
-    // Use Get directly, no side effects now
-    a, err := h.svc.Get(id)
-    if err != nil {
-        http.NotFound(w, r)
-        return
-    }
-    if a.OwnerID != owner {
-        http.Error(w, "Anda tidak memiliki akses untuk mengedit artikel ini", http.StatusForbidden)
-        return
-    }
-    data := editData{
-        ID:         a.ID,
-        Title:      a.Title,
-        Author:     a.Author,
-        Content:    a.Content,
-        ContentRaw: strings.ReplaceAll(a.Content, "<br>", "\n"),
-    }
-    h.templates.ExecuteTemplate(w, "edit", data)
-}
-
-func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
-    if r.Method != http.MethodPost {
-        http.Redirect(w, r, "/", http.StatusSeeOther)
-        return
-    }
-    id := strings.TrimPrefix(r.URL.Path, "/update/")
-    if id == "" {
-        http.Redirect(w, r, "/", http.StatusSeeOther)
-        return
-    }
-    owner := getOrCreateUserID(w, r)
-    title := r.FormValue("title")
-    author := r.FormValue("author")
-    content := r.FormValue("content")
-    if title == "" || author == "" || content == "" {
-        http.Error(w, "Semua field harus diisi", http.StatusBadRequest)
-        return
-    }
-    _, err := h.svc.Update(id, title, author, content, owner)
-    if err != nil {
-        http.Error(w, fmt.Sprint(err), http.StatusInternalServerError)
-        return
-    }
-    http.Redirect(w, r, "/view/"+id, http.StatusSeeOther)
-}
-
-func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
-    if r.Method != http.MethodPost {
-        http.Redirect(w, r, "/", http.StatusSeeOther)
-        return
-    }
-    id := strings.TrimPrefix(r.URL.Path, "/delete/")
-    if id == "" {
-        http.Redirect(w, r, "/", http.StatusSeeOther)
-        return
-    }
-    owner := getOrCreateUserID(w, r)
-    if err := h.svc.Delete(id, owner); err != nil {
-        http.Error(w, fmt.Sprint(err), http.StatusInternalServerError)
-        return
-    }
-    http.Redirect(w, r, "/", http.StatusSeeOther)
+	ID         string
+	Title      string
+	Author     string
+	Content    string
+	ContentRaw string
 }

@@ -11,11 +11,16 @@ import (
 
 func main() {
     repo := repository.NewMemoryRepo()
-    clock := service.RealClock{}
-    idGen := service.RealIDGenerator{}
+    
+    // pake function types, bukan struct
+    // clock sama idgen ini function yang bisa dipanggil
+    clock := service.NewRealClock()  // function buat dapetin waktu
+    idGen := service.NewRealIDGen()  // function buat generate id
+    
     svc := service.NewArticleService(repo, clock, idGen)
     h := handler.NewHandler(svc)
 
+    // routing biasa (bisa pake middleware kalo mau)
     http.HandleFunc("/", h.Home)
     http.HandleFunc("/create", h.Create)
     http.HandleFunc("/view/", h.View)
