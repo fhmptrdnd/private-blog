@@ -108,10 +108,6 @@ func Retry(op ArticleOperation, times int) ArticleOperation {
 	}
 }
 
-// ============================================
-// COLLECTION TRANSFORMATIONS (Map, Filter, Reduce)
-// ============================================
-
 // map, transform setiap artikel dalam slice
 // contoh: map(articles, withtitle("new title"))
 // implementasi rekursif: base case + recursive case
@@ -162,10 +158,6 @@ func Reduce[T any](articles []models.Article, initial T, reducer func(T, models.
 	return Reduce(rest, accumulated, reducer)
 }
 
-// ============================================
-// HELPER PREDICATES (buat Filter)
-// ============================================
-
 // hasminviews, predicate buat filter artikel dengan minimal views
 func HasMinViews(minViews int) func(models.Article) bool {
 	return func(a models.Article) bool {
@@ -186,10 +178,6 @@ func IsOwnedBy(ownerID string) func(models.Article) bool {
 		return a.OwnerID == ownerID
 	}
 }
-
-// ============================================
-// FUNCTIONAL CONCURRENCY PATTERNS
-// ============================================
 
 // parallelmap, transform setiap artikel secara concurrent
 // menggunakan goroutines + channels buat parallel processing

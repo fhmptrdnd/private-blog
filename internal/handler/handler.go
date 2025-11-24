@@ -15,12 +15,13 @@ import (
 // handler, struct yang isinya function-function handler
 // ini penerapan "functions as first-class citizens" di layer handler
 type Handler struct {
-	Home   http.HandlerFunc
-	Create http.HandlerFunc
-	View   http.HandlerFunc
-	Edit   http.HandlerFunc
-	Update http.HandlerFunc
-	Delete http.HandlerFunc
+	Home       http.HandlerFunc
+	Create     http.HandlerFunc
+	View       http.HandlerFunc
+	Edit       http.HandlerFunc
+	Update     http.HandlerFunc
+	Delete     http.HandlerFunc
+	MyArticles http.HandlerFunc
 }
 
 // newhandler, bikin handler baru dengan closure
@@ -31,6 +32,7 @@ func NewHandler(svc *service.ArticleService) Handler {
 	template.Must(t.New("home").Parse(homeTemplate))
 	template.Must(t.New("view").Parse(viewTemplate))
 	template.Must(t.New("edit").Parse(editTemplate))
+	template.Must(t.New("myarticles").Parse(myArticlesTemplate))
 
 	// helper function (closure) buat render template
 	render := func(w http.ResponseWriter, name string, data interface{}) {
@@ -98,7 +100,14 @@ func NewHandler(svc *service.ArticleService) Handler {
 				http.Error(w, "Forbidden", http.StatusForbidden)
 				return
 			}
-			data := viewData{Article: a, IsOwner: true}
+			// prepare data untuk edit form
+			data := editData{
+				ID:         a.ID,
+				Title:      a.Title,
+				Author:     a.Author,
+				Content:    a.Content,
+				ContentRaw: strings.ReplaceAll(a.Content, "<br>", "\n"),
+			}
 			render(w, "edit", data)
 		},
 		Update: func(w http.ResponseWriter, r *http.Request) {
@@ -132,6 +141,16 @@ func NewHandler(svc *service.ArticleService) Handler {
 				return
 			}
 			http.Redirect(w, r, "/", http.StatusSeeOther)
+		},
+		MyArticles: func(w http.ResponseWriter, r *http.Request) {
+			owner := getOrCreateUserID(w, r)
+			articles, err := svc.ListMyArticles(owner)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			data := myArticlesData{Articles: articles, Count: len(articles)}
+			render(w, "myarticles", data)
 		},
 	}
 }
@@ -636,7 +655,7 @@ const editTemplate = `
     <div class="container">
         <div class="editor">
             <span class="edit-label">✏️ Mode Edit</span>
-            <form method="POST" action="/update/{{.ID}}">
+            <form method="POST" action="/update/{{.ID}}" onsubmit="return confirm('Simpan perubahan artikel ini?');">
                 <input type="text" name="title" value="{{.Title}}" required>
                 <input type="text" name="author" class="author-input" value="{{.Author}}" required>
                 <textarea name="content" required>{{.ContentRaw}}</textarea>
@@ -664,3 +683,154 @@ type editData struct {
 	Content    string
 	ContentRaw string
 }
+
+type myArticlesData struct {
+	Articles []models.Article
+	Count    int
+}
+
+const myArticlesTemplate = `
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Artikel Saya</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Georgia', serif;
+            background: #f7f7f7;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: white;
+            border-bottom: 1px solid #e0e0e0;
+            padding: 20px 0;
+        }
+
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .logo {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #333;
+            text-decoration: none;
+        }
+
+        .page-title {
+            margin: 40px 0 20px;
+            font-size: 2em;
+        }
+
+        .article-count {
+            color: #999;
+            margin-bottom: 30px;
+        }
+
+        .article-list {
+            list-style: none;
+        }
+
+        .article-item {
+            background: white;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border-radius: 4px;
+            transition: transform 0.2s;
+        }
+
+        .article-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+        }
+
+        .article-title {
+            font-size: 1.4em;
+            margin-bottom: 10px;
+        }
+
+        .article-title a {
+            color: #333;
+            text-decoration: none;
+        }
+
+        .article-title a:hover {
+            color: #4CAF50;
+        }
+
+        .article-meta {
+            color: #999;
+            font-size: 0.9em;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .btn-home {
+            display: inline-block;
+            margin-top: 30px;
+            padding: 12px 30px;
+            background: #333;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            transition: background 0.3s;
+        }
+
+        .btn-home:hover {
+            background: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="container">
+            <a href="/" class="logo">Telegraph</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <h1 class="page-title">Artikel Saya</h1>
+        <p class="article-count">{{.Count}} artikel</p>
+
+        {{if .Articles}}
+        <ul class="article-list">
+            {{range .Articles}}
+            <li class="article-item">
+                <h2 class="article-title">
+                    <a href="/view/{{.ID}}">{{.Title}}</a>
+                </h2>
+                <div class="article-meta">
+                    Oleh {{.Author}} · {{.CreatedAt.Format "2 Jan 2006"}} · 👁️ {{.Views}} views
+                </div>
+            </li>
+            {{end}}
+        </ul>
+        {{else}}
+        <div class="empty-state">
+            <p>Belum ada artikel.</p>
+            <p>Mulai menulis artikel pertamamu!</p>
+        </div>
+        {{end}}
+
+        <a href="/" class="btn-home">Buat Artikel Baru</a>
+    </div>
+</body>
+</html>
+`

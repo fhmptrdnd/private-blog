@@ -61,12 +61,14 @@ func sanitizeHTML(content string) string {
 // create, bikin artikel baru
 // return value (bukan pointer) biar immutable
 func (s *ArticleService) Create(title, author, content, ownerID string) (models.Article, error) {
+	now := s.clock()
 	a := models.Article{
-		ID:        s.idGen(),        // panggil function langsung!
+		ID:        s.idGen(),
 		Title:     title,
 		Author:    author,
 		Content:   sanitizeHTML(content),
-		CreatedAt: s.clock(),        // panggil function langsung!
+		CreatedAt: now,
+		UpdatedAt: now,  // set updatedat = createdat saat create
 		Views:     0,
 		OwnerID:   ownerID,
 	}
@@ -110,6 +112,7 @@ func (s *ArticleService) Update(id, title, author, content, ownerID string) (mod
 	updated.Title = title
 	updated.Author = author
 	updated.Content = sanitizeHTML(content)
+	updated.UpdatedAt = s.clock()  // update timestamp saat update
 	
 	if err := s.repo.Update(updated); err != nil {
 		return models.Article{}, err
@@ -127,4 +130,10 @@ func (s *ArticleService) Delete(id, ownerID string) error {
 		return repository.ErrNotFound
 	}
 	return s.repo.Delete(id)
+}
+
+// listmyarticles, ambil semua artikel milik user
+// ini query, ga ngubah state
+func (s *ArticleService) ListMyArticles(ownerID string) ([]models.Article, error) {
+	return s.repo.ListByOwner(ownerID)
 }

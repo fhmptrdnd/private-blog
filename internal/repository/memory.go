@@ -1,13 +1,10 @@
 package repository
 
 import (
-	"errors"
 	"sync"
 
 	"github.com/fhmptrdnd/weather-api-test-web-based/internal/models"
 )
-
-var ErrNotFound = errors.New("not found")
 
 // newmemoryrepo, bikin repo baru dengan closure
 // return repository struct yang isinya function-function
@@ -49,6 +46,17 @@ func NewMemoryRepo() Repository {
             }
             delete(articles, id)
             return nil
+        },
+        ListByOwner: func(ownerID string) ([]models.Article, error) {
+            mu.RLock()
+            defer mu.RUnlock()
+            var result []models.Article
+            for _, a := range articles {
+                if a.OwnerID == ownerID {
+                    result = append(result, a)
+                }
+            }
+            return result, nil
         },
     }
 }
