@@ -11,7 +11,9 @@ import (
 
 func main() {
     repo := repository.NewMemoryRepo()
-    svc := service.NewArticleService(repo)
+    clock := service.RealClock{}
+    idGen := service.RealIDGenerator{}
+    svc := service.NewArticleService(repo, clock, idGen)
     h := handler.NewHandler(svc)
 
     http.HandleFunc("/", h.Home)
@@ -21,7 +23,7 @@ func main() {
     http.HandleFunc("/update/", h.Update)
     http.HandleFunc("/delete/", h.Delete)
 
-    fmt.Println("📝 Telegraph Clone berjalan di http://localhost:8080")
+    fmt.Println("Telegraph running at http://localhost:8080")
     if err := http.ListenAndServe(":8080", nil); err != nil {
         fmt.Println("server error:", err)
     }

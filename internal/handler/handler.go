@@ -544,7 +544,7 @@ const editTemplate = `
 `
 
 type viewData struct {
-    Article *models.Article
+    Article models.Article
     IsOwner bool
 }
 
@@ -593,6 +593,10 @@ func (h *Handler) View(w http.ResponseWriter, r *http.Request) {
         return
     }
     owner := getOrCreateUserID(w, r)
+    
+    // Increment views (Side Effect separated from Query)
+    _ = h.svc.IncrementViews(id)
+
     a, err := h.svc.Get(id)
     if err != nil {
         http.NotFound(w, r)
@@ -609,7 +613,8 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
         return
     }
     owner := getOrCreateUserID(w, r)
-    a, err := h.svc.GetNoIncrement(id)
+    // Use Get directly, no side effects now
+    a, err := h.svc.Get(id)
     if err != nil {
         http.NotFound(w, r)
         return
