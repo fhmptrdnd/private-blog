@@ -12,34 +12,34 @@ var ErrNotFound = errors.New("not found")
 // MemoryRepo is a simple in-memory repository (not for production).
 type MemoryRepo struct {
     mu       sync.RWMutex
-    articles map[string]*models.Article
+    articles map[string]models.Article
 }
 
 // NewMemoryRepo creates a new MemoryRepo.
 func NewMemoryRepo() *MemoryRepo {
     return &MemoryRepo{
-        articles: make(map[string]*models.Article),
+        articles: make(map[string]models.Article),
     }
 }
 
-func (m *MemoryRepo) Create(a *models.Article) error {
+func (m *MemoryRepo) Create(a models.Article) error {
     m.mu.Lock()
     defer m.mu.Unlock()
     m.articles[a.ID] = a
     return nil
 }
 
-func (m *MemoryRepo) Get(id string) (*models.Article, error) {
+func (m *MemoryRepo) Get(id string) (models.Article, error) {
     m.mu.RLock()
     defer m.mu.RUnlock()
     a, ok := m.articles[id]
     if !ok {
-        return nil, ErrNotFound
+        return models.Article{}, ErrNotFound
     }
     return a, nil
 }
 
-func (m *MemoryRepo) Update(a *models.Article) error {
+func (m *MemoryRepo) Update(a models.Article) error {
     m.mu.Lock()
     defer m.mu.Unlock()
     if _, ok := m.articles[a.ID]; !ok {
