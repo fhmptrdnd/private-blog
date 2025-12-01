@@ -7,9 +7,6 @@ import (
 	"html/template"
 	"net/http"
 	"strings"
-
-	// "github.com/fhmptrdnd/weather-api-test-web-based/internal/models"
-	// "github.com/fhmptrdnd/weather-api-test-web-based/internal/service"
     
 	"github.com/fhmptrdnd/private-blog/internal/models"
 	"github.com/fhmptrdnd/private-blog/internal/service"
