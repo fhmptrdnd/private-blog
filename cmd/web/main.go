@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/fhmptrdnd/weather-api-test-web-based/internal/handler"
-	"github.com/fhmptrdnd/weather-api-test-web-based/internal/repository"
-	"github.com/fhmptrdnd/weather-api-test-web-based/internal/service"
+	"github.com/fhmptrdnd/private-blog/internal/handler"
+	"github.com/fhmptrdnd/private-blog/internal/repository"
+	"github.com/fhmptrdnd/private-blog/internal/service"
 )
 
 func main() {

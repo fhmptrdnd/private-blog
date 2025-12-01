@@ -34,8 +34,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/fhmptrdnd/weather-api-test-web-based/internal/models"
-	"github.com/fhmptrdnd/weather-api-test-web-based/internal/repository"
+	// "github.com/fhmptrdnd/weather-api-test-web-based/internal/models"
+	// "github.com/fhmptrdnd/weather-api-test-web-based/internal/repository"
+	"github.com/fhmptrdnd/private-blog/internal/models"
+	"github.com/fhmptrdnd/private-blog/internal/repository"
 )
 
 // Clock abstracts time generation.
