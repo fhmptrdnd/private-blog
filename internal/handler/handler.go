@@ -7,7 +7,7 @@ import (
 	"html/template"
 	"net/http"
 	"strings"
-    
+
 	"github.com/fhmptrdnd/private-blog/internal/models"
 	"github.com/fhmptrdnd/private-blog/internal/service"
 )
@@ -375,14 +375,14 @@ const viewTemplate = `
             </div>
 
             <div class="stats">
-                👁️ {{.Article.Views}} tayangan
+                {{.Article.Views}} tayangan
             </div>
 
             {{if .IsOwner}}
             <div class="owner-actions">
-                <a href="/edit/{{.Article.ID}}" class="btn-edit">✏️ Edit Artikel</a>
+                <a href="/edit/{{.Article.ID}}" class="btn-edit">Edit Artikel</a>
                 <form method="POST" action="/delete/{{.Article.ID}}" style="display: inline;" onsubmit="return confirm('Yakin ingin menghapus artikel ini?');">
-                    <button type="submit" class="btn-delete">🗑️ Hapus Artikel</button>
+                    <button type="submit" class="btn-delete">Hapus Artikel</button>
                 </form>
             </div>
             {{end}}
@@ -526,7 +526,7 @@ const editTemplate = `
 
     <div class="container">
         <div class="editor">
-            <span class="edit-label">✏️ Mode Edit</span>
+            <span class="edit-label">Mode Edit</span>
             <form method="POST" action="/update/{{.ID}}">
                 <input type="text" name="title" value="{{.Title}}" required>
                 <input type="text" name="author" class="author-input" value="{{.Author}}" required>
