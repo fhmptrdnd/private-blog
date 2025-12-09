@@ -1,132 +1,58 @@
-# Private Blog
+<p align="center">
+    <a href="https://go.dev" target="_blank">
+        <img src="https://go.dev/blog/go-brand/Go-Logo/PNG/Go-Logo_Blue.png" width="400" alt="Go Logo">
+    </a>
+</p>
 
-Repositori ini adalah contoh aplikasi web sederhana yang sudah direfaktor menjadi struktur project Go yang lebih rapi dan mengikuti pola Repository.
+<p align="center">
+    <a href="https://pkg.go.dev/"><img src="https://img.shields.io/badge/Go-1.20+-00ADD8?style=for-the-badge&logo=go" alt="Go Version"></a>
+    <a href="#"><img src="https://img.shields.io/badge/License-MIT-red?style=for-the-badge" alt="License"></a>
+    <a href="#"><img src="https://img.shields.io/badge/Status-Active-success?style=for-the-badge" alt="Status"></a>
+</p>
 
-Tujuan refaktor: memisahkan tanggung jawab (separation of concerns), mempermudah pengujian, dan membuat titik ekstensi (mis. ganti penyimpanan ke DB) lebih mudah.
+<p align="center">
+    <strong>Platform Blogging Minimalis Berbasis Functional-First</strong>
+</p>
 
----
+<p align="center">
+    Telegraph adalah alat publikasi tangguh yang dibangun sepenuhnya dengan <strong>Go</strong>. Proyek ini mendefinisikan ulang pengembangan web dengan mematuhi prinsip <strong>Functional Programming</strong> secara ketat, menawarkan perpaduan unik antara kesederhanaan, performa, dan kemurnian kode.
+</p>
 
-## Struktur proyek (singkat)
+<br>
 
-```
-cmd/
-  web/                # entrypoint aplikasi (main)
-internal/
-  handler/            # HTTP handlers + template
-  models/             # model domain
-  repository/         # interface repository + implementasi (memory)
-  service/            # logika bisnis
-go.mod
-README.md
-```
+## 🌟 Tentang Proyek
 
-- `cmd/web` : `main.go` yang menginisialisasi repo/service/handler dan menjalankan server.
-- `internal/models` : definisi struct `Article`.
-- `internal/repository` : interface `Repository` + `MemoryRepo` (implementasi in-memory).
-- `internal/service` : `ArticleService` yang mengenkapsulasi logika (create/get/update/delete).
-- `internal/handler` : HTTP handlers dan template rendering.
+Telegraph dirancang sebagai cara termudah untuk mempublikasikan konten di web. Tanpa registrasi yang rumit, tanpa password yang perlu diingat—cukup tulis dan terbitkan. Di balik layar, proyek ini berfungsi sebagai studi kasus komprehensif dalam penerapan konsep Functional Programming tingkat lanjut dalam ekosistem Go.
 
----
+Kami meninggalkan pola Object-Oriented tradisional untuk merangkul **Immutability**, **Pure Functions**, dan **Composition**, menghasilkan basis kode yang dapat diprediksi, mudah diuji, dan aman (thread-safe) secara desain.
 
-## Cara menjalankan (development)
+## ✨ Fitur Utama
 
-1. Pastikan Go 1.20+ terpasang.
-2. Dari folder project jalankan (Windows cmd):
+*   **Functional Core**: Dibangun dengan pure functions, closures, dan higher-order functions untuk keandalan maksimal.
+*   **Anonymous Publishing**: Sistem kepemilikan berbasis cookie memungkinkan penulisan instan tanpa perlu mendaftar.
+*   **SQLite Persistence**: Penyimpanan data yang tangguh menggunakan SQLite dengan query yang teroptimasi dan kemampuan soft-delete.
+*   **RESTful Architecture**: Routing URL yang bersih dan semantik mengikuti standar web modern.
+*   **Responsive Design**: Pengalaman membaca dan menulis yang indah dan bebas gangguan di perangkat apa pun.
+*   **Secure by Default**: Sanitasi HTML otomatis dan verifikasi kepemilikan untuk semua operasi.
 
-```cmd
-go run ./cmd/web
-```
+## 🛠️ Teknologi
 
-atau build executable lalu jalankan:
+*   **Bahasa**: Go (Golang)
+*   **Database**: SQLite
+*   **Templating**: Go `html/template`
+*   **Arsitektur**: Functional Domain-Driven Design
+*   **Frontend**: Vanilla CSS (Tanpa framework, performa murni)
 
-```cmd
-go build -o web ./cmd/web
-.\web
-```
+## 🚀 Mulai Sekarang
 
-Buka `http://localhost:8080` di browser.
+Rasakan kesederhanaan Telegraph di komputer lokal Anda dalam hitungan detik.
 
----
+1.  **Clone repositori** ke workspace lokal Anda.
+2.  **Jalankan aplikasi** menggunakan perintah Go standar.
+3.  **Buka browser** dan kunjungi `http://localhost:8080`.
 
-## Endpoints & Contoh (curl)
+Selesai! Anda siap untuk mulai mempublikasikan tulisan.
 
-- GET `/` — halaman editor (form HTML)
-- POST `/create` — buat artikel (form POST)
-- GET `/view/{id}` — lihat artikel
-- GET `/edit/{id}` — tampilkan halaman edit (harus pemilik)
-- POST `/update/{id}` — update artikel (harus pemilik)
-- POST `/delete/{id}` — hapus artikel (harus pemilik)
+## 📄 Lisensi
 
-Contoh membuat artikel via curl (form POST):
-
-```bash
-curl -X POST \
-  -F "title=Contoh Judul" \
-  -F "author=Fahmi" \
-  -F "content=Isi artikel\nBaris kedua" \
-  http://localhost:8080/create -v
-```
-
-Contoh hapus (POST):
-
-```bash
-curl -X POST http://localhost:8080/delete/{id} -v
-```
-
-Catatan: kepemilikan artikel ditentukan oleh cookie `user_id` yang dibuat pada kunjungan pertama. Untuk melakukan edit/delete lewat curl, sertakan cookie yang sama (browser otomatis menyimpannya).
-
----
-
-## Penjelasan teknis singkat
-
-- ID dihasilkan secara acak (hex) saat membuat artikel.
-- Konten disanitasi sederhana: newline -> `<br>` (contoh minimal). Untuk produksi perlu sanitizer yang lebih baik.
-- `MemoryRepo` menggunakan `sync.RWMutex` agar aman untuk akses bersamaan.
-
----
-
-## Menambahkan unit test (saran)
-
-Saya dapat membuat test untuk:
-
-- `internal/repository` (MemoryRepo): test Create/Get/Update/Delete dan error path.
-- `internal/service` (ArticleService): test Create, Get (view increment), Update (pemilik vs bukan pemilik), Delete.
-
-Perintah menjalankan test:
-
-```cmd
-go test ./... -v
-```
-
----
-
-## Migrasi ke SQLite — langkah ringkas
-
-1. Pilih driver SQLite:
-   - `modernc.org/sqlite` (pure Go)
-   - `github.com/mattn/go-sqlite3` (memerlukan CGO)
-2. Tambah file `internal/repository/sqlite.go` yang mengimplementasikan interface `Repository`.
-3. Buat tabel `articles` dengan tipe kolom sesuai model (lihat contoh SQL di bawah).
-4. Di `cmd/web/main.go`, ubah inisialisasi repo menjadi SQLiteRepo jika konfigurasi/flag menginginkan persistent DB.
-
-Contoh SQL sederhana untuk membuat tabel:
-
-```sql
-CREATE TABLE IF NOT EXISTS articles (
-  id TEXT PRIMARY KEY,
-  title TEXT NOT NULL,
-  author TEXT NOT NULL,
-  content TEXT NOT NULL,
-  created_at DATETIME NOT NULL,
-  views INTEGER NOT NULL,
-  owner_id TEXT
-);
-```
-
----
-
-## Debugging & troubleshooting cepat
-
-- Jika server tidak jalan: jalankan `go run ./cmd/web` dan periksa pesan error di terminal.
-- Jika template error: periksa parsing template di `internal/handler/handler.go`.
-- Jika cookie tidak muncul: cek konfigurasi browser/extensions yang memblok cookie.
+Telegraph adalah perangkat lunak open-source yang dilisensikan di bawah [MIT license](https://opensource.org/licenses/MIT).
