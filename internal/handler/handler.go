@@ -18,7 +18,6 @@ type Handler struct {
 }
 
 func NewHandler(svc *service.ArticleService) *Handler {
-    // Parse templates once and give each template a name
     t := template.New("templates")
     template.Must(t.New("home").Parse(homeTemplate))
     template.Must(t.New("view").Parse(viewTemplate))
@@ -27,13 +26,12 @@ func NewHandler(svc *service.ArticleService) *Handler {
     return &Handler{svc: svc, templates: t}
 }
 
-// getOrCreateUserID copied from original app
 func getOrCreateUserID(w http.ResponseWriter, r *http.Request) string {
     cookie, err := r.Cookie("user_id")
     if err == nil && cookie.Value != "" {
         return cookie.Value
     }
-    // create new
+
     id := generateID()
     http.SetCookie(w, &http.Cookie{
         Name:     "user_id",
@@ -46,14 +44,12 @@ func getOrCreateUserID(w http.ResponseWriter, r *http.Request) string {
     return id
 }
 
-// generateID same as in service (non-exported duplicate to avoid import cycle)
 func generateID() string {
     b := make([]byte, 8)
     rand.Read(b)
     return hex.EncodeToString(b)
 }
 
-// Templates (copied from original single-file app)
 const homeTemplate = `
 <!DOCTYPE html>
 <html lang="id">
