@@ -1,6 +1,6 @@
 # Private Blog
 
-Repositori ini adalah contoh aplikasi web sederhana (mirip Telegraph) yang sudah direfaktor menjadi struktur project Go yang lebih rapi dan mengikuti pola Repository.
+Repositori ini adalah contoh aplikasi web sederhana yang sudah direfaktor menjadi struktur project Go yang lebih rapi dan mengikuti pola Repository.
 
 Tujuan refaktor: memisahkan tanggung jawab (separation of concerns), mempermudah pengujian, dan membuat titik ekstensi (mis. ganti penyimpanan ke DB) lebih mudah.
 
