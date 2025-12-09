@@ -1,11 +1,8 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
-	"log"
 	"net/http"
-	"time"
 
 	_ "modernc.org/sqlite"
 
@@ -30,14 +27,19 @@ func main() {
 	svc := service.NewArticleService(repo, clock, idGen)
 	h := handler.NewHandler(svc)
 
-	// routing biasa (bisa pake middleware kalo mau)
-	http.HandleFunc("/", h.Home)
-	http.HandleFunc("/my-articles", h.MyArticles)
-	http.HandleFunc("/create", h.Create)
-	http.HandleFunc("/view/", h.View)
-	http.HandleFunc("/edit/", h.Edit)
-	http.HandleFunc("/update/", h.Update)
-	http.HandleFunc("/delete/", h.Delete)
+	// WithLogging: log setiap request
+	// WithPanicRecovery: tangkap panic biar server ga crash
+	
+	// routes yang cuma butuh GET
+	http.HandleFunc("/", handler.Chain(h.Home, handler.WithLogging, handler.WithPanicRecovery))
+	http.HandleFunc("/my-articles", handler.Chain(h.MyArticles, handler.WithLogging, handler.WithPanicRecovery))
+	http.HandleFunc("/view/", handler.Chain(h.View, handler.WithLogging, handler.WithPanicRecovery))
+	http.HandleFunc("/edit/", handler.Chain(h.Edit, handler.WithLogging, handler.WithPanicRecovery))
+	
+	// routes yang butuh POST (dengan method check)
+	http.HandleFunc("/create", handler.Chain(h.Create, handler.WithLogging, handler.WithPanicRecovery))
+	http.HandleFunc("/update/", handler.Chain(h.Update, handler.WithLogging, handler.WithPanicRecovery))
+	http.HandleFunc("/delete/", handler.Chain(h.Delete, handler.WithLogging, handler.WithPanicRecovery))
 
 	fmt.Println("Telegraph running at http://localhost:8080")
 	if err := http.ListenAndServe(":8080", nil); err != nil {

@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"log"
 
-	_ "github.com/mattn/go-sqlite3"
+	_ "modernc.org/sqlite"
 )
 
 func main() {
 	// Path ke database di cmd/web folder
-	db, err := sql.Open("sqlite3", "../web/blog.db")
+	db, err := sql.Open("sqlite", "../web/blog.db")
 	if err != nil {
 		log.Fatal(err)
 	}

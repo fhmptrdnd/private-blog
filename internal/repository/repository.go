@@ -2,7 +2,7 @@ package repository
 
 import (
 	"errors"
-	"github.com/fhmptrdnd/weather-api-test-web-based/internal/models"
+	"github.com/fhmptrdnd/private-blog/internal/models"
 )
 
 // errnotfound, error kalo data ga ketemu

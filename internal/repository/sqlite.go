@@ -3,15 +3,15 @@ package repository
 import (
 	"database/sql"
 
-	_ "github.com/mattn/go-sqlite3"
-	"github.com/fhmptrdnd/weather-api-test-web-based/internal/models"
+	"github.com/fhmptrdnd/private-blog/internal/models"
+	_ "modernc.org/sqlite"
 )
 
 // return repository struct yang isinya function-function
 // state (db connection) disimpan dalam closure
 func NewSQLiteRepo(dbPath string) (Repository, error) {
 	// open database connection
-	db, err := sql.Open("sqlite3", dbPath)
+	db, err := sql.Open("sqlite", dbPath)
 	if err != nil {
 		return Repository{}, err
 	}

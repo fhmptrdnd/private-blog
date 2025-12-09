@@ -1,6 +1,6 @@
 package service
 
-import "github.com/fhmptrdnd/weather-api-test-web-based/internal/models"
+import "github.com/fhmptrdnd/private-blog/internal/models"
 
 // articletransform, function buat ngubah artikel
 // ini contoh function sebagai tipe data
